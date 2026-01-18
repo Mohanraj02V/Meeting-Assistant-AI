@@ -1,6 +1,6 @@
 services:
   - type: web
     name: meeting-assistant-ai
-    runtime: python-3.10.13
+    env: python
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
