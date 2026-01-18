@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.3
 aiosignal==1.4.0
@@ -79,7 +80,7 @@ networkx==3.4.2
 nltk==3.9.2
 noisereduce==3.0.3
 numba==0.63.1
-numpy==1.26.4
+numpy>=2.0.2,<2.1.0
 omegaconf==2.3.0
 onnxruntime==1.23.2
 openai==2.14.0
@@ -155,10 +156,10 @@ toml==0.10.2
 tomli==2.3.0
 
 # 🔹 CPU-ONLY TORCH (CUDA REMOVED)
-torch==2.1.2
+torch==2.1.2+cpu
+torchaudio==2.1.2+cpu
 torch-audiomentations==0.12.0
 torch_pitch_shift==1.2.5
-torchaudio==2.1.2
 torchmetrics==1.2.1
 
 tornado==6.5.4
