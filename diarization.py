@@ -55,31 +55,32 @@ def diarize_audio(audio_path):
     return speakers, avg_embeddings
 '''
 
+# -------------------------------------------------------------------
+# PyTorch 2.6+ compatibility fix
+# -------------------------------------------------------------------
+import torch
+import omegaconf
+
+torch.serialization.add_safe_globals([
+    omegaconf.listconfig.ListConfig,
+    omegaconf.dictconfig.DictConfig,
+])
+
+# -------------------------------------------------------------------
 import os
 import numpy as np
-import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.core.inference import Inference
 
-# -------------------------------------------------------------------
-# Environment & device
-# -------------------------------------------------------------------
 HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
-
 if not HF_TOKEN:
-    raise RuntimeError(
-        "HUGGINGFACE_TOKEN is missing. "
-        "Add it in Render → Environment Variables."
-    )
+    raise RuntimeError("HUGGINGFACE_TOKEN missing")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# -------------------------------------------------------------------
-# Load models (AUTH + DEVICE ARE MANDATORY)
-# -------------------------------------------------------------------
 pipeline = Pipeline.from_pretrained(
     "pyannote/speaker-diarization",
-    use_auth_token=HF_TOKEN
+    use_auth_token=HF_TOKEN,
 )
 pipeline.to(DEVICE)
 
@@ -87,12 +88,9 @@ embedding_model = Inference(
     "pyannote/embedding",
     window="whole",
     use_auth_token=HF_TOKEN,
-    device=DEVICE
+    device=DEVICE,
 )
 
-# -------------------------------------------------------------------
-# Diarization function
-# -------------------------------------------------------------------
 def diarize_audio(audio_path: str):
     diarization = pipeline(audio_path)
 
@@ -106,7 +104,6 @@ def diarize_audio(audio_path: str):
             "end": float(turn.end),
         })
 
-        # Pyannote expects a dict input
         emb = embedding_model({
             "audio": audio_path,
             "start": turn.start,
@@ -115,10 +112,10 @@ def diarize_audio(audio_path: str):
 
         embeddings.setdefault(speaker, []).append(emb)
 
-    # Average embeddings per speaker
     avg_embeddings = {
-        speaker: np.mean(v, axis=0)
-        for speaker, v in embeddings.items()
+        s: np.mean(v, axis=0)
+        for s, v in embeddings.items()
     }
 
     return speakers, avg_embeddings
+
