@@ -59,6 +59,7 @@ def diarize_audio(audio_path):
 # PyTorch 2.6+ compatibility fix
 # -------------------------------------------------------------------
 import torch
+import typing 
 import omegaconf
 
 torch.serialization.add_safe_globals([
