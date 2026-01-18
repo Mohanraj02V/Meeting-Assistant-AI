@@ -160,7 +160,7 @@ torchmetrics==1.2.1
 
 tornado==6.5.4
 tqdm==4.67.1
-transformers==4.36.2
+transformers>=4.48.0,<5.0.0
 typer==0.21.1
 typer-slim==0.21.1
 typing-inspection==0.4.2
