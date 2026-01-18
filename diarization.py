@@ -56,19 +56,18 @@ def diarize_audio(audio_path):
 '''
 
 # -------------------------------------------------------------------
-# PyTorch 2.6+ safe globals allowlist for pyannote.audio
+# PyTorch 2.6+ compatibility fix for pyannote.audio
+# This MUST come before importing pyannote
 # -------------------------------------------------------------------
 import torch
-import typing
-import omegaconf
 
-torch.serialization.add_safe_globals([
-    list,
-    typing.Any,
-    omegaconf.listconfig.ListConfig,
-    omegaconf.dictconfig.DictConfig,
-    omegaconf.base.ContainerMetadata,
-])
+_original_torch_load = torch.load
+
+def torch_load_compat(*args, **kwargs):
+    kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+
+torch.load = torch_load_compat
 
 # -------------------------------------------------------------------
 # Normal imports
@@ -78,10 +77,19 @@ import numpy as np
 from pyannote.audio import Pipeline
 from pyannote.audio.core.inference import Inference
 
+# -------------------------------------------------------------------
+# Configuration
+# -------------------------------------------------------------------
 HF_TOKEN = os.environ.get("HUGGINGFACE_TOKEN")
+
+if HF_TOKEN is None:
+    raise RuntimeError("HUGGINGFACE_TOKEN environment variable is not set")
 
 DEVICE = torch.device("cpu")
 
+# -------------------------------------------------------------------
+# Load models
+# -------------------------------------------------------------------
 pipeline = Pipeline.from_pretrained(
     "pyannote/speaker-diarization",
     use_auth_token=HF_TOKEN,
@@ -93,7 +101,10 @@ embedding_model = Inference(
     device=DEVICE,
 )
 
-def diarize_audio(audio_path):
+# -------------------------------------------------------------------
+# Diarization function
+# -------------------------------------------------------------------
+def diarize_audio(audio_path: str):
     diarization = pipeline(audio_path)
 
     speakers = []
@@ -115,8 +126,8 @@ def diarize_audio(audio_path):
         embeddings.setdefault(speaker, []).append(emb)
 
     avg_embeddings = {
-        s: np.mean(v, axis=0) for s, v in embeddings.items()
+        speaker: np.mean(vectors, axis=0)
+        for speaker, vectors in embeddings.items()
     }
 
     return speakers, avg_embeddings
-
