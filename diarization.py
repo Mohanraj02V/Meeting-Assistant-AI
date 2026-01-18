@@ -64,6 +64,7 @@ import omegaconf
 torch.serialization.add_safe_globals([
     omegaconf.listconfig.ListConfig,
     omegaconf.dictconfig.DictConfig,
+    omegaconf.base.ContainerMetadata,
 ])
 
 # -------------------------------------------------------------------
