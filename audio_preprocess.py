@@ -86,7 +86,7 @@ def preprocess_audio(input_path: str, output_path: str) -> str:
         reduced = nr.reduce_noise(
             y=audio,
             sr=sr,
-            stationary=True
+            stationary=False
         )
 
         # --------------------------------------------------
