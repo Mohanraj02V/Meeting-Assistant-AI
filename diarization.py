@@ -56,45 +56,44 @@ def diarize_audio(audio_path):
 '''
 
 # -------------------------------------------------------------------
-# PyTorch 2.6+ compatibility fix
+# PyTorch 2.6+ safe globals allowlist for pyannote.audio
 # -------------------------------------------------------------------
 import torch
-import typing 
+import typing
 import omegaconf
 
 torch.serialization.add_safe_globals([
+    list,
+    typing.Any,
     omegaconf.listconfig.ListConfig,
     omegaconf.dictconfig.DictConfig,
     omegaconf.base.ContainerMetadata,
-    typing.Any,
 ])
 
+# -------------------------------------------------------------------
+# Normal imports
 # -------------------------------------------------------------------
 import os
 import numpy as np
 from pyannote.audio import Pipeline
 from pyannote.audio.core.inference import Inference
 
-HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
-if not HF_TOKEN:
-    raise RuntimeError("HUGGINGFACE_TOKEN missing")
+HF_TOKEN = os.environ.get("HUGGINGFACE_TOKEN")
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")
 
 pipeline = Pipeline.from_pretrained(
     "pyannote/speaker-diarization",
     use_auth_token=HF_TOKEN,
-)
-pipeline.to(DEVICE)
+).to(DEVICE)
 
 embedding_model = Inference(
     "pyannote/embedding",
     window="whole",
-    use_auth_token=HF_TOKEN,
     device=DEVICE,
 )
 
-def diarize_audio(audio_path: str):
+def diarize_audio(audio_path):
     diarization = pipeline(audio_path)
 
     speakers = []
@@ -116,8 +115,7 @@ def diarize_audio(audio_path: str):
         embeddings.setdefault(speaker, []).append(emb)
 
     avg_embeddings = {
-        s: np.mean(v, axis=0)
-        for s, v in embeddings.items()
+        s: np.mean(v, axis=0) for s, v in embeddings.items()
     }
 
     return speakers, avg_embeddings
